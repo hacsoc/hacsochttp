@@ -1,0 +1,12 @@
+GET http://localhost:8000/ HTTP/1.1
+Host: localhost:8000
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:2.0b8pre) Gecko/20101030 Firefox-4.0/4.0b8pre
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+Accept-Language: en-us,en;q=0.5
+Accept-Encoding: gzip, deflate
+Accept-Charset: ISO-8859-1,utf-8;q=0.7,*;q=0.7
+Keep-Alive: 115
+Proxy-Connection: keep-alive
+Cookie: _redmine_session=BAh7BzoQX2NzcmZfdG9rZW4iMVVpYWY3Y0F5dkF0WjlQRTFNSU9NU2FOWGtXZk0zSHNZSGxBK1lETmtTdmc9Og9zZXNzaW9uX2lkIiViNjIwMWNhOTJlM2M4OGM4MWE0ZWUxNmEzODI4ODkzZQ%3D%3D--8143e6006ae6a9e4098eda998a7d182c75161a57
+Cache-Control: max-age=0
+

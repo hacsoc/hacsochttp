@@ -1,0 +1,20 @@
+HTTP/1.0 200 OK
+Server: SimpleHTTP/0.6 Python/2.6.5
+Date: Mon, 01 Nov 2010 06:35:11 GMT
+Content-type: text/html
+Content-length: 346
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 3.2 Final//EN"><html>
+<title>Directory listing for /</title>
+<body>
+<h2>Directory listing for /</h2>
+<hr>
+<ul>
+<li><a href=".git/">.git/</a>
+<li><a href="mysrv.py">mysrv.py</a>
+<li><a href="sample_request.http">sample_request.http</a>
+<li><a href="simplesrv.py">simplesrv.py</a>
+</ul>
+<hr>
+</body>
+</html>
