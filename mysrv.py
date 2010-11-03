@@ -5,7 +5,8 @@ and HEAD requests in a fairly straightforward manner.
 
 """
 
-import os, sys, thread, time, cookie_session
+import os, sys, thread, time, cgi
+import cookie_session, user_manager
 import BaseHTTPServer, SocketServer
 from safedict import ThreadSafeDict as safedict
 try:
@@ -77,6 +78,11 @@ class SimpleHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 
     server_version = "mysrv/0.0001"
 
+    def __init__(self, *args, **kwargs):
+        BaseHTTPServer.BaseHTTPRequestHandler.__init__(self, *args, **kwargs)
+        self.session = dict()
+        self.user = dict()
+
     def head(self, response_code=200, content_type='text/html', content_len=0, cookies=None):
         self.send_response(response_code)
         self.send_header("Content-type", str(content_type))
@@ -98,12 +104,14 @@ class SimpleHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         return c
 
     def cookies(self):
-        if 'Cookie' not in self.headers: return dict()
-        d = dict()
-        for c in (cook.strip() for cook in self.headers['Cookie'].split(';')):
-            k, v = c.split('=')
-            d[k] = v
-        return d
+        if not hasattr(self, '_cookies'):
+            if 'Cookie' not in self.headers: return dict()
+            d = dict()
+            for c in (cook.strip() for cook in self.headers['Cookie'].split(';')):
+                k, v = c.split('=')
+                d[k] = v
+            self._cookies = d
+        return self._cookies
 
     def do(self, path, params):
         def _404(req):
@@ -121,14 +129,28 @@ class SimpleHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             self.head(content_len=len(page), content_type=content_type, cookies=cookies)
             self.wfile.write(page)
         print
+        #print dict(self.server.users)
+        #print dict(self.server.users_email)
         print self.client_address[0]
         print self.headers['User-Agent']
         print '"%s"' % self.path
         print path, params
         print self.cookies()
-        cookie, ses_dict = cookie_session.init_session(self)
-        print cookie
+        try:
+            cookie, ses_dict, user_dict = user_manager.init_session(self, params)
+        except user_manager.LoginError, e:
+            path = '/error'
+            self.error = e.usrmsg
+            content_type, page, cookies = self.server.handler(path)(self)
+            _200(self, content_type, page, cookies)
+            return
+        self.session = ses_dict
+        self.user = user_dict
+        #print '...........................'
+        #print cookie
         #print ses_dict
+        #print user_dict
+        #print '...........................'
         content_type, page, cookies = self.server.handler(path)(self)
         if cookies: cookies.append(cookie)
         else: cookies = [cookie]
@@ -136,13 +158,14 @@ class SimpleHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         else: _200(self, content_type, page, cookies)
 
     def parseparams(self, params):
-        params = params.split('&')
-        d = dict()
-        for p in params:
-            p = p.split('=', 1)
-            if len(p) == 1: d.update({p[0]:''})
-            else: d.update({p[0]:p[1]})
-        return d
+        return cgi.parse_qsl(params)
+        #params = params.split('&')
+        #d = dict()
+        #for p in params:
+            #p = p.split('=', 1)
+            #if len(p) == 1: d.update({p[0]:''})
+            #else: d.update({p[0]:p[1]})
+        #return d
 
     def parsepath(self, p):
         split = self.path.split('?', 1)
@@ -180,6 +203,7 @@ if __name__ == '__main__':
     HTTPServer.allow_reuse_address = True
     httpd = HTTPServer(("", PORT), Handler)
     httpd.register_handlers(module.handlers)
+    user_manager.add_user(httpd, '001', 'Tim Henderson', 'tim.tadh@gmail.com', 'test')
     print "serving at port", PORT
     thread.start_new_thread(httpd.serve_forever, tuple())
     raw_input('> enter to quit\n')

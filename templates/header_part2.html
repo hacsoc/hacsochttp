@@ -17,14 +17,14 @@
 <div class="container">
 
 <div class="header">
-<table width='100%' style="border-style: hidden;">  
+<table width='100%' style="border-style: hidden;">
     <tr>
         <td rowspan=2 width="55%" style="border-style: hidden;">
-            <a class="inline" href="main.py">
-            <h1 class="header" width="300">Diplomacloud</h1>
+            <a class="inline" href="main">
+            <h1 class="header" width="400">Hacsoc-HTTP</h1>
             </a>
         </td>
-        
+
 <+ if name != None:
         <td align=right colspan=2>
             User:&nbsp;&nbsp;<%name%>&nbsp;&nbsp;&nbsp;
@@ -32,7 +32,7 @@
         </td>
 |= else:
         <td align=right colspan=2>
-            <a class="inline" href="main.py" style="background-color:#e1e1e1;">Login</a>
+            <a class="inline" href="login" style="background-color:#e1e1e1;">Login</a>
         </td>
 ->
 
@@ -49,11 +49,11 @@
     </tr>
     <tr>
         <td colspan=2 style="border-style: hidden;">
-            <span class="dark_green">The online game of strategy, deviousness, and skill<span>
+            <span class="dark_green">The online game of cookie sessions, user managerment, and skill<span>
         </td>
 <+ if status_msg:
         <td align=right>
-            <a class="inline" 
+            <a class="inline"
                 href="main.py?clear_status=true" style="background-color:#e1e1e1; font-size: xx-small;">
                 clear status
             </a>

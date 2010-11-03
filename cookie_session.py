@@ -35,7 +35,7 @@ def new_session_id(prounds=50):
 
 def sign_msg(sigid, time, ip_addr, usragent, msg):
     '''Signs a msg using the passed in parameters.'''
-    print '--->', sigid, time, ip_addr, usragent, msg
+    #print '--->', sigid, time, ip_addr, usragent, msg
     shamac = hmac.new(sigid, '', SHA256)
     shamac.update(msg)
     shamac.update(ip_addr)
@@ -56,6 +56,7 @@ def new_sig_id():
 def create_cookie(req, session_id, sig_id, time_signed):
     '''Creates a cookie from the passed in parameters and signs it with the sigID and returns the
     cookie and the msg_sig.'''
+    #print 'create_cookie'
     msg_sig = sign_msg(sig_id, time_signed, req.client_address[0], req.headers['User-Agent'], session_id)
     cookie = req.make_cookie('timsession', session_id)
     return cookie, msg_sig
@@ -65,17 +66,19 @@ def check_cookie(req, sig, sig_id, time_signed, msg):
     the cookie that was saved in the database. SignatureID is the ID used to sign the cookie. time_signed
     is the time since the epoch that the cookie was signed and the msg is of course what was actually
     signed. Returns True if the cookie is valid, False otherwise.'''
+    #print 'check_cookie'
 
     sig2 = sign_msg(sig_id, time_signed, req.client_address[0], req.headers['User-Agent'], msg)
-    print '------------'
-    print sig
-    print sig2
-    print '------------'
+    #print '------------'
+    #print sig
+    #print sig2
+    #print '------------'
     if sig2 == sig: return True
     else: return False
 
 def create_session(req, session_id, sig_id, msg_sig, usr_id, time_signed):
     '''Creates a new row in the session table with the passed in parameters and the current time.'''
+    #print 'create_session'
     d = {
         'session_id':session_id,
         'sig_id':sig_id,
@@ -91,6 +94,7 @@ def create_session(req, session_id, sig_id, msg_sig, usr_id, time_signed):
 def update_session(req, session_id, sig_id, msg_sig, usr_id, time_signed):
     '''Updates the session identified by the session ID, with passed in parameters and the current
     time.'''
+    #print 'update_session'
     if session_id in req.server.sessions:
         session = dict(req.server.sessions[session_id])
         session['sig_id'] = sig_id
@@ -103,6 +107,7 @@ def update_session(req, session_id, sig_id, msg_sig, usr_id, time_signed):
 def get_session(req, session_id):
     '''Get the session from the session table in the database identified by the sessionID. It returns
     the session in the session dictionary format.'''
+    #print 'get_session'
     if session_id in req.server.sessions:
         return dict(req.server.sessions[session_id])
     return dict()
@@ -110,6 +115,7 @@ def get_session(req, session_id):
 def clear_old_sessions(req):
     '''This method goes through all the rows in in the table session and checks to see if they have
     expire or if there are duplicates. If either is the case it deletes them from the table.'''
+    #print 'clear_old_sessions'
     todel = list()
     ctime = time.time()
     for session_id, session in req.server.sessions.iteritems():
@@ -121,6 +127,7 @@ def clear_old_sessions(req):
 
 def delete_session(req, session_id):
     '''This removes the session identified by its sessionID from the database in the table session'''
+    #print 'init_session'
     if session_id in req.server.sessions:
         del req.server.sessions[session_id]
 
@@ -128,6 +135,7 @@ def make_new_session(req):
     '''This creates a new session. This means it creates a new row in the session table of the database.
     It also generates a session cookie for the new session. The function returns the cookie and the
     session dictionary.'''
+    #print 'make_new_session'
     sig_id = new_sig_id()
     session_id = new_session_id()
     epochtime = time.time()
@@ -141,6 +149,7 @@ def init_session(req, user=None):
     ensuring only non-expired sessions are validated. If the session validates then it generates
     a new session cookie for that session. If anything else happens it creates a new session and
     generates a new cookie. The method returns the generated cookie and the session dictionary.'''
+    #print 'init_session'
     clear_old_sessions(req)
     cookies = req.cookies()
     ses_dict = {}
@@ -167,10 +176,11 @@ def init_session(req, user=None):
 
 def verify_session(req):
     '''This method returns True if the current session is valid, False otherwise.'''
+    #print 'verify_session'
     cookies = req.cookies()
     if cookies.has_key('timsession'):
-        session_id = cookie['timsession']
-        session = get_session(session_id)
+        session_id = cookies['timsession']
+        session = get_session(req, session_id)
         if session:
             return check_cookie(req, session['msg_sig'],
                                 session['sig_id'], session['time'], session_id)

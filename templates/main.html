@@ -1,0 +1,17 @@
+<+ templater.print_template("templates/header_part1.html", globals()) #
+->
+<+ templater.print_template("templates/header_part2.html", globals()) #
+->
+
+<h2 class="main">Welcome</h2>
+
+<ul>
+    <li>session id = <b><%session_id%></b></li>
+    <li>user_id = <b><%user_id%></b></li>
+</ul>
+
+
+
+
+<+ templater.print_template("templates/footer.html", globals()) #
+->

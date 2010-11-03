@@ -7,9 +7,20 @@ def path(p):
         return f
     return inner
 
-@path('/hello')
-def hello(req):
-    target_page = 'hello'
+@path('/main')
+def main(req):
+    if req.user:
+        user_id = req.user['usr_id']
+        session_id = req.session['session_id']
+        page = templater.render('templates/main.html', locals())
+        return 'text/html', page, None
+    else:
+        return login(req)
+
+@path('/login')
+def login(req):
+    target_page = 'main'
+    session_id = req.session['session_id']
     page = templater.render('templates/login_template.html', locals())
     return 'text/html', page, None
 
@@ -19,6 +30,13 @@ def style(req):
     s = f.read()
     f.close()
     return 'text/css', s, None
+
+@path('/error')
+def error(req):
+    if hasattr(req, 'error'): error = str(req.error)
+    else: error = 'no error?'
+    page = templater.render('templates/error.html', locals())
+    return 'text/html', page, None
 
 #print hello
 #print hello.path
