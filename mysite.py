@@ -9,7 +9,7 @@ def path(p):
 
 @path('/hello')
 def hello(req):
-    target_page = 'main'
+    target_page = 'hello'
     page = templater.render('templates/login_template.html', locals())
     return 'text/html', page, None
 

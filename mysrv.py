@@ -78,9 +78,7 @@ class SimpleHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         self.end_headers()
 
 
-    def do_GET(self):
-        """Serve a GET request."""
-        #s = self.rfile.read()
+    def do(self, path, params):
         def _404(req):
             page = '''
             <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 3.2 Final//EN"><html>
@@ -96,15 +94,42 @@ class SimpleHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             self.head(content_len=len(page), content_type=content_type, cookies=cookies)
             self.wfile.write(page)
         print
-        print self.server
         print '"%s"' % self.path
+        print path, params
         if 'Cookie' in self.headers:
             print "recieved = " + str(self.headers['Cookie'])
-        content_type, page, cookies = self.server.handler(self.path)(self)
+        content_type, page, cookies = self.server.handler(path)(self)
         if page == None: _404(self)
         else: _200(self, content_type, page, cookies)
+
+    def parseparams(self, params):
+        params = params.split('&')
+        d = dict()
+        for p in params:
+            p = p.split('=', 1)
+            if len(p) == 1: d.update({p[0]:''})
+            else: d.update({p[0]:p[1]})
+        return d
+
+    def parsepath(self, p):
+        split = self.path.split('?', 1)
+        if len(split) == 1: return split[0], dict()
+        else: return split[0], self.parseparams(split[1])
+
+    def do_GET(self):
+        """Serve a GET request."""
+        #s = self.rfile.read()
         #self.head(content_len=len(mypage), cookies=["mycook=hello; expires=%s; path=/; HttpOnly" % (self.date_time_string(time.time()+30000))])
         #self.wfile.write(mypage)
+        path, params = self.parsepath(self.path)
+        self.do(path, params)
+
+    def do_POST(self):
+        path, params = self.parsepath(self.path)
+        post_params = self.rfile._rbuf.getvalue()
+        print 'post params = %s' % post_params
+        params.update(self.parseparams(post_params))
+        self.do(path, params)
 
 if __name__ == '__main__':
     if len(sys.argv) != 2:
