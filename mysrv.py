@@ -34,23 +34,19 @@ class HTTPServer(SocketServer.TCPServer):
     def __init__(self, *args, **kwargs):
         SocketServer.TCPServer.__init__(self, *args, **kwargs)
         self.handlers = dict()
+        self.sessions = dict()
+        self.users = dict()
+        self.users_email = dict()
 
     def register_handlers(self, handlers):
         self.handlers.update(handlers)
+        print self.handlers
 
     def handler(self, path):
-        def default(req):
-            page = '''
-            <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 3.2 Final//EN"><html>
-            <title>404 Page Not Found</title>
-            <body>
-            <h1>404 Page Not Found</h1>
-            </body>
-            </html>
-            '''
-            req.head(response_code=404, content_len=len(page))
-            req.wfile.write(page)
-        if path in self.handlers: return self.handlers[path]
+        def default(req): return None, None, None
+        if path in self.handlers:
+            print self.handlers[path]
+            return self.handlers[path]
         return default
 
 
@@ -85,12 +81,28 @@ class SimpleHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     def do_GET(self):
         """Serve a GET request."""
         #s = self.rfile.read()
+        def _404(req):
+            page = '''
+            <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 3.2 Final//EN"><html>
+            <title>404 Page Not Found</title>
+            <body>
+            <h1>404 Page Not Found</h1>
+            </body>
+            </html>
+            '''
+            req.head(response_code=404, content_len=len(page))
+            req.wfile.write(page)
+        def _200(req, content_type, page, cookies):
+            self.head(content_len=len(page), content_type=content_type, cookies=cookies)
+            self.wfile.write(page)
         print
         print self.server
         print '"%s"' % self.path
         if 'Cookie' in self.headers:
             print "recieved = " + str(self.headers['Cookie'])
-        self.server.handler(self.path)(self)
+        content_type, page, cookies = self.server.handler(self.path)(self)
+        if page == None: _404(self)
+        else: _200(self, content_type, page, cookies)
         #self.head(content_len=len(mypage), cookies=["mycook=hello; expires=%s; path=/; HttpOnly" % (self.date_time_string(time.time()+30000))])
         #self.wfile.write(mypage)
 
@@ -101,9 +113,15 @@ if __name__ == '__main__':
     module = __import__(sys.argv[1])
     print module
     print hasattr(module, 'handlers')
+    if not hasattr(module, 'handlers'):
+        print 'module cannot be served because it does not have a handlers attr'
+        sys.exit(2)
+    print module.handlers
     PORT = 8000
     Handler = SimpleHTTPRequestHandler
+    HTTPServer.allow_reuse_address = True
     httpd = HTTPServer(("", PORT), Handler)
+    httpd.register_handlers(module.handlers)
     print "serving at port", PORT
     thread.start_new_thread(httpd.serve_forever, tuple())
     raw_input('> enter to quit\n')
