@@ -5,7 +5,7 @@ and HEAD requests in a fairly straightforward manner.
 
 """
 
-import os, sys
+import os, sys, thread
 import posixpath
 import BaseHTTPServer
 import urllib
@@ -20,14 +20,39 @@ except ImportError:
     from StringIO import StringIO
 
 
-mypage = """
-<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 3.2 Final//EN"><html>
-<title>some html yo</title>
-<body>
-<h1>Hello World!</h1>
-</body>
-</html>
-"""
+#mypage = """
+#<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 3.2 Final//EN"><html>
+#<title>some html yo</title>
+#<body>
+#<h1>Hello World!</h1>
+#</body>
+#</html>
+#"""
+
+class HTTPServer(SocketServer.TCPServer):
+
+    def __init__(self, *args, **kwargs):
+        SocketServer.TCPServer.__init__(self, *args, **kwargs)
+        self.handlers = dict()
+
+    def register_handlers(self, handlers):
+        self.handlers.update(handlers)
+
+    def handler(self, path):
+        def default(req):
+            page = '''
+            <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 3.2 Final//EN"><html>
+            <title>404 Page Not Found</title>
+            <body>
+            <h1>404 Page Not Found</h1>
+            </body>
+            </html>
+            '''
+            req.head(response_code=404, content_len=len(page))
+            req.wfile.write(page)
+        if path in self.handlers: return self.handlers[path]
+        return default
+
 
 class SimpleHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 
@@ -44,8 +69,8 @@ class SimpleHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 
     server_version = "mysrv/0.0001"
 
-    def head(self, content_type='text/html', content_len=0, cookies=None):
-        self.send_response(200)
+    def head(self, response_code=200, content_type='text/html', content_len=0, cookies=None):
+        self.send_response(response_code)
         self.send_header("Content-type", str(content_type))
         self.send_header("Content-Length", str(content_len))
         self.send_header("Last-Modified", self.date_time_string(time.time()))
@@ -60,21 +85,27 @@ class SimpleHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     def do_GET(self):
         """Serve a GET request."""
         #s = self.rfile.read()
+        print
+        print self.server
+        print '"%s"' % self.path
         if 'Cookie' in self.headers:
-            sys.stderr.write("recieved = " + str(self.headers['Cookie']))
-        self.head(content_len=len(mypage), cookies=["mycook=hello; expires=%s; path=/; HttpOnly" % (self.date_time_string(time.time()+30000))])
-        self.wfile.write(mypage)
-
-    def do_HEAD(self):
-        """Serve a HEAD request."""
-        self.head(content_len=len(mypage))
+            print "recieved = " + str(self.headers['Cookie'])
+        self.server.handler(self.path)(self)
+        #self.head(content_len=len(mypage), cookies=["mycook=hello; expires=%s; path=/; HttpOnly" % (self.date_time_string(time.time()+30000))])
+        #self.wfile.write(mypage)
 
 if __name__ == '__main__':
+    if len(sys.argv) != 2:
+        print 'you must supply the module you wish to serve'
+        sys.exit(1)
+    module = __import__(sys.argv[1])
+    print module
+    print hasattr(module, 'handlers')
     PORT = 8000
-
     Handler = SimpleHTTPRequestHandler
-
-    httpd = SocketServer.TCPServer(("", PORT), Handler)
-
+    httpd = HTTPServer(("", PORT), Handler)
     print "serving at port", PORT
-    httpd.serve_forever()
+    thread.start_new_thread(httpd.serve_forever, tuple())
+    raw_input('> enter to quit\n')
+    httpd.shutdown()
+    httpd.server_close()
