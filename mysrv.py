@@ -5,15 +5,9 @@ and HEAD requests in a fairly straightforward manner.
 
 """
 
-import os, sys, thread
-import posixpath
-import BaseHTTPServer
-import urllib
-import cgi
-import shutil
-import mimetypes
-import SocketServer
-import time
+import os, sys, thread, time, cookie_session
+import BaseHTTPServer, SocketServer
+from safedict import ThreadSafeDict as safedict
 try:
     from cStringIO import StringIO
 except ImportError:
@@ -29,14 +23,32 @@ except ImportError:
 #</html>
 #"""
 
+#writer locking:
+    #aquire  wrtlock
+    #do write
+    #release wrtlock
+
+#reader locking:
+    #aquire mutex
+    #rdcount += 1
+    #if rdcount == 1: aquire wrtlock
+    #release mutex
+
+    #do read
+
+    #aquire mutex
+    #rdcount -= 1
+    #if rdcount == 0: release wrtlock
+    #release mutex
+
 class HTTPServer(SocketServer.TCPServer):
 
     def __init__(self, *args, **kwargs):
         SocketServer.TCPServer.__init__(self, *args, **kwargs)
         self.handlers = dict()
-        self.sessions = dict()
-        self.users = dict()
-        self.users_email = dict()
+        self.sessions = safedict()
+        self.users = safedict()
+        self.users_email = safedict()
 
     def register_handlers(self, handlers):
         self.handlers.update(handlers)
@@ -45,7 +57,7 @@ class HTTPServer(SocketServer.TCPServer):
     def handler(self, path):
         def default(req): return None, None, None
         if path in self.handlers:
-            print self.handlers[path]
+            #print self.handlers[path]
             return self.handlers[path]
         return default
 
@@ -77,6 +89,21 @@ class SimpleHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
                 sys.stderr.write('\n')
         self.end_headers()
 
+    def make_cookie(self, key, value, path='/', httponly=True):
+        ## security vulnerabilities in this function can you spot them?
+        if httponly: httponly = 'HttpOnly'
+        else: httponly = ''
+        expires = self.date_time_string(time.time()+30000)
+        c="%s=%s; expires=%s; path=%s; %s"%(key, value, expires, path, httponly)
+        return c
+
+    def cookies(self):
+        if 'Cookie' not in self.headers: return dict()
+        d = dict()
+        for c in (cook.strip() for cook in self.headers['Cookie'].split(';')):
+            k, v = c.split('=')
+            d[k] = v
+        return d
 
     def do(self, path, params):
         def _404(req):
@@ -94,11 +121,17 @@ class SimpleHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             self.head(content_len=len(page), content_type=content_type, cookies=cookies)
             self.wfile.write(page)
         print
+        print self.client_address[0]
+        print self.headers['User-Agent']
         print '"%s"' % self.path
         print path, params
-        if 'Cookie' in self.headers:
-            print "recieved = " + str(self.headers['Cookie'])
+        print self.cookies()
+        cookie, ses_dict = cookie_session.init_session(self)
+        print cookie
+        #print ses_dict
         content_type, page, cookies = self.server.handler(path)(self)
+        if cookies: cookies.append(cookie)
+        else: cookies = [cookie]
         if page == None: _404(self)
         else: _200(self, content_type, page, cookies)
 
