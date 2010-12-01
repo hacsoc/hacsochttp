@@ -5,7 +5,7 @@ and HEAD requests in a fairly straightforward manner.
 
 """
 
-import os, sys, thread, time, cgi
+import os, sys, thread, time, cgi, hashlib
 import cookie_session, user_manager
 import BaseHTTPServer, SocketServer
 from safedict import ThreadSafeDict as safedict
@@ -47,6 +47,10 @@ class HTTPServer(SocketServer.TCPServer):
     def __init__(self, module, *args, **kwargs):
         SocketServer.TCPServer.__init__(self, *args, **kwargs)
         self.module = module
+        self.modfile = module.__file__[:-1] if module.__file__[-1] == 'c' else module.__file__
+        f = open(self.module.__file__, 'r')
+        self.modhash = hashlib.md5(f.read()).digest()
+        f.close()
         self.handlers = dict()
         self.sessions = safedict()
         self.users = safedict()
@@ -56,8 +60,13 @@ class HTTPServer(SocketServer.TCPServer):
         self.applications_usrid = safedict()
 
     def reload(self):
-        print 'reloading'
-        self.module = reload(module)
+        f = open(self.module.__file__, 'r')
+        modhash = hashlib.md5(f.read()).digest()
+        f.close()
+        if modhash != self.modhash:
+            print 'reloading'
+            self.module = reload(module)
+            self.modhash = modhash
 
     #def register_handlers(self, handlers):
         #self.handlers.update(handlers)
