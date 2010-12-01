@@ -6,7 +6,7 @@
 #Purpose: Functions for dealing with users
 
 import os, time, sys
-from Crypto.Hash import SHA256
+from hashlib import sha256 as SHA256
 import templater
 import auth
 import cookie_session
@@ -26,7 +26,7 @@ class LoginError(Exception):
 def gen_userID():
     '''Generates exactly one userID using random information from /dev/urandom and the SHA256 hash
     algorithm.'''
-    sha = SHA256.new()
+    sha = SHA256()
     sha.update(os.urandom(64))
     for x in range(50):
         sha.update(sha.digest())

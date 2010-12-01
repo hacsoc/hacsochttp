@@ -50,13 +50,16 @@ class HTTPServer(SocketServer.TCPServer):
         self.sessions = safedict()
         self.users = safedict()
         self.users_email = safedict()
+        self.applications = safedict()
+        self.applications_name = safedict()
+        self.applications_usrid = safedict()
 
     def register_handlers(self, handlers):
         self.handlers.update(handlers)
         print self.handlers
 
     def handler(self, path):
-        def default(req): return None, None, None
+        def default(req, params): return None, None, None
         if path in self.handlers:
             #print self.handlers[path]
             return self.handlers[path]
@@ -141,7 +144,7 @@ class SimpleHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         except user_manager.LoginError, e:
             path = '/error'
             self.error = e.usrmsg
-            content_type, page, cookies = self.server.handler(path)(self)
+            content_type, page, cookies = self.server.handler(path)(self, params)
             _200(self, content_type, page, cookies)
             return
         self.session = ses_dict
@@ -151,7 +154,7 @@ class SimpleHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         #print ses_dict
         #print user_dict
         #print '...........................'
-        content_type, page, cookies = self.server.handler(path)(self)
+        content_type, page, cookies = self.server.handler(path)(self, params)
         if cookies: cookies.append(cookie)
         else: cookies = [cookie]
         if page == None: _404(self)
@@ -188,9 +191,12 @@ class SimpleHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         self.do(path, params)
 
 if __name__ == '__main__':
-    if len(sys.argv) != 2:
+    if len(sys.argv) < 2:
         print 'you must supply the module you wish to serve'
         sys.exit(1)
+    if len(sys.argv) == 3:
+        print os.path.abspath(sys.argv[2])
+        sys.path.append(os.path.abspath(sys.argv[2]))
     module = __import__(sys.argv[1])
     print module
     print hasattr(module, 'handlers')
