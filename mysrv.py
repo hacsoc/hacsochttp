@@ -44,8 +44,9 @@ except ImportError:
 
 class HTTPServer(SocketServer.TCPServer):
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, module, *args, **kwargs):
         SocketServer.TCPServer.__init__(self, *args, **kwargs)
+        self.module = module
         self.handlers = dict()
         self.sessions = safedict()
         self.users = safedict()
@@ -54,15 +55,20 @@ class HTTPServer(SocketServer.TCPServer):
         self.applications_name = safedict()
         self.applications_usrid = safedict()
 
-    def register_handlers(self, handlers):
-        self.handlers.update(handlers)
-        print self.handlers
+    def reload(self):
+        print 'reloading'
+        self.module = reload(module)
+
+    #def register_handlers(self, handlers):
+        #self.handlers.update(handlers)
+        #print self.handlers
 
     def handler(self, path):
+        self.reload()
         def default(req, params): return None, None, None
-        if path in self.handlers:
+        if path in self.module.handlers:
             #print self.handlers[path]
-            return self.handlers[path]
+            return self.module.handlers[path]
         return default
 
 
@@ -207,8 +213,8 @@ if __name__ == '__main__':
     PORT = 8000
     Handler = SimpleHTTPRequestHandler
     HTTPServer.allow_reuse_address = True
-    httpd = HTTPServer(("", PORT), Handler)
-    httpd.register_handlers(module.handlers)
+    httpd = HTTPServer(module, ("", PORT), Handler)
+    #httpd.register_handlers(module.handlers)
     user_manager.add_user(httpd, '001', 'Tim Henderson', 'tim.tadh@gmail.com', 'test')
     print "serving at port", PORT
     thread.start_new_thread(httpd.serve_forever, tuple())
