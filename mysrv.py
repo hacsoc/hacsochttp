@@ -48,6 +48,7 @@ class HTTPServer(SocketServer.TCPServer):
         SocketServer.TCPServer.__init__(self, *args, **kwargs)
         self.module = module
         self.modfile = module.__file__[:-1] if module.__file__[-1] == 'c' else module.__file__
+        print '-', self.modfile
         f = open(self.module.__file__, 'r')
         self.modhash = hashlib.md5(f.read()).digest()
         f.close()
