@@ -210,8 +210,10 @@ if __name__ == '__main__':
         print 'you must supply the module you wish to serve'
         sys.exit(1)
     if len(sys.argv) == 3:
-        print os.path.abspath(sys.argv[2])
-        sys.path.append(os.path.abspath(sys.argv[2]))
+        l = sys.argv[2].split(':')
+        for path in l:
+            path = os.path.abspath(path)
+            sys.path.append(path)
     module = __import__(sys.argv[1])
     print module
     print hasattr(module, 'handlers')
