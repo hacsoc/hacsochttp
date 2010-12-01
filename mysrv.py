@@ -61,7 +61,7 @@ class HTTPServer(SocketServer.TCPServer):
         self.applications_usrid = safedict()
 
     def reload(self):
-        f = open(self.module.__file__, 'r')
+        f = open(self.modfile, 'r')
         modhash = hashlib.md5(f.read()).digest()
         f.close()
         if modhash != self.modhash:
