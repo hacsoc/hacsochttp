@@ -60,7 +60,6 @@ class Text(formencode.FancyValidator):
         return s
 
     def clean(self, text, whitehtml=False):
-        import db
         text = text.replace('<', '&lt;')
         text = text.replace('>', '&gt;')
         if whitehtml: text = self.allow_whitehtml(text)
@@ -76,6 +75,7 @@ class Text(formencode.FancyValidator):
             g = self.htmlre.search(text)
         return text
 
+cleaner = Text()
 
 #class SN_Exists(formencode.FancyValidator):
     #def _to_python(self, value, state):
