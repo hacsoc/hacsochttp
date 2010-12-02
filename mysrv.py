@@ -147,6 +147,7 @@ class SimpleHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         def _200(req, content_type, page, cookies):
             self.head(content_len=len(page), content_type=content_type, cookies=cookies)
             self.wfile.write(page)
+        params = dict(params)
         print
         #print dict(self.server.users)
         #print dict(self.server.users_email)
