@@ -233,3 +233,4 @@ if __name__ == '__main__':
     raw_input('> enter to quit\n')
     httpd.shutdown()
     httpd.server_close()
+    if hasattr(module, 'quithook'): module.quithook()
