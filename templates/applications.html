@@ -3,14 +3,13 @@
 <+ templater.print_template("templates/header_part2.html", globals()) #
 ->
 
-<h2 class="main">Welcome</h2>
+<h2 class="main">Applications</h2>
 
 <ul>
-    <li>session id = <b><%session_id%></b></li>
-    <li>user_id = <b><%user_id%></b></li>
+<+ for application in applications:
+    <li><%application['name']%></li>
+->
 </ul>
-
-<a href='coversheet'>Start Application</a>
 
 
 <+ templater.print_template("templates/footer.html", globals()) #

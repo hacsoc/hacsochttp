@@ -3,6 +3,9 @@ Server: SimpleHTTP/0.6 Python/2.6.5
 Date: Mon, 01 Nov 2010 06:35:11 GMT
 Content-type: text/html
 Content-length: 346
+Set-Cookie: name=value; path=/hello/world; expires= domain=; secure; HttpOnly
+Set-Cookie: name2=value; path=/hello/world; domain=; secure; HttpOnly
+Set-Cookie: name3=value; path=/hello/world; domain=; secure; HttpOnly
 
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 3.2 Final//EN"><html>
 <title>Directory listing for /</title>

@@ -1,0 +1,20 @@
+<+ templater.print_template("templates/header_part1.html", globals()) #
+->
+<+ templater.print_template("templates/header_part2.html", globals()) #
+->
+
+<h2 class="main">Make Application</h2>
+
+<b><%session_id%></b>
+
+<form action="applications" method="post">
+<p>Organization Name: <input type="text" name="name" size=50/></p>
+<p><input type="checkbox" name="mailbox" value="None" /> <b>Please check the box if
+your group does not want a mail box in the USG office.</b> <i>By checking the box you
+agree that you do not want/need a mailbox and waive your group’s right to a mail
+box for the next semester.</i></p>
+<p><input type="submit" name="submit" value="submit"/><p>
+</form>
+
+<+ templater.print_template("templates/footer.html", globals()) #
+->
